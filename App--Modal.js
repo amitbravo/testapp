@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 //import Fontisto from 'react-native-vector-icons/Fontisto';
 import Modal from 'react-native-modal'
@@ -31,6 +32,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios'
 import _ from 'lodash'
 import Collapsible from 'react-native-collapsible';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+
 
 
 
@@ -41,7 +44,7 @@ const App = () => {
   const [state, setState] = useState({ data: null, collapsedFlags: null, loading: true })
   const [searchText, setSearchText] = useState('')
   const [searchResults, setSearchResults] = useState([])
-  const [modalStatus, setModalStatus] = useState(false)
+  const [modalStatus, setModalStatus] = useState(true)
   const iconsArray = {
    1: { id: 1, iconName: 'food-steak', iconColor: '#f26aa8', iconBackgroundColor: '#fde0ec', extraDescription: '(4 Oz Serving)' },
    2: { id: 2, iconName: 'fish', iconColor: '#6998ee', iconBackgroundColor: '#d8e8ff', extraDescription: '(1 Oz Serving)' },
@@ -65,12 +68,12 @@ const App = () => {
           if(typeof persistedData !== 'undefined' && persistedData !== null){
             console.log('ok so we load data from localstorage')
             if(typeof persistedData === 'string'){
-              let persistedData = JSON.parse(persistedData)
+              persistedData = JSON.parse(persistedData)
             }
             console.log('persistedData xx',persistedData)
             var collapsedFlags = {}
             _.map(persistedData, each => {
-                collapsedFlags[id] = true
+                collapsedFlags[each.id] = true
             })
             console.log('persistedData',persistedData)
             console.log('collapsedFlags',collapsedFlags)
@@ -161,6 +164,7 @@ const App = () => {
   }
 
 
+  // this will search subcats
   const searchContent = () => {
     var searchContent = String(searchText).trim().toLowerCase()
     var searchResults = []
@@ -173,17 +177,26 @@ const App = () => {
 
     console.log('searchContent',searchContent)
     _.map(state.data, eachCat => {
+
+        //search content matching with category name
+        if(String(eachCat.title).toLowerCase() === searchContent){
+          if(__DEV__) console.log('its found')
+          searchResults.push({ catID: eachCat.id, subCat: null })
+          collapsedFlags[eachCat.id] = false
+        }
+
+        // searching content maatching with subcategory name.. its dirty way however..
         _.map(eachCat.data, eachsubCat => {
             console.log('eachsubCat title',eachsubCat.title)
             if(String(eachsubCat.title).toLowerCase() === searchContent){
-              console.log('its found')
+              if(__DEV__) console.log('its found')
               searchResults.push({ catID: eachCat.id, subCat: eachsubCat.id })
               collapsedFlags[eachCat.id] = false
             }
         })
       })
-      console.log('searchresults>',searchResults)
-      console.log('collapsedFlags after',collapsedFlags)
+      //console.log('searchresults>',searchResults)
+      //console.log('collapsedFlags after',collapsedFlags)
       if(searchResults.length > 0){
         setState(prev => ({...prev, collapsedFlags}))
       }
@@ -227,27 +240,38 @@ const App = () => {
 
       <Modal transparent onBackdropPress={()=>setModalStatus(!modalStatus)}  onRequestClose={()=>setModalStatus(!modalStatus)}  onBackButtonPress={()=>setModalStatus(!modalStatus)} isVisible={modalStatus} style={{ padding: 0, margin: 0 }}>
         <View style={{ flex: 1 , justifyContent: 'center', alignItems: 'center'  }}>
+        <KeyboardAwareScrollView>
         <View style={{ backgroundColor: '#eee', width, height, padding: 10 }}>
-            <Button onPress={()=>setModalStatus(!modalStatus)} title="Close" />
+
+
+
+            <TouchableOpacity onPress={()=>setModalStatus(!modalStatus)} >
+                <MaterialCommunityIcons color={'black'} name='close' size={34} />
+            </TouchableOpacity>
 
             {searchBar()}
 
             {searchResults.length > 0 && (
-                <Text style={{ color: 'black' }}>{searchResults.length} results found</Text>
+                <Text style={{ color: 'black', paddingLeft: 20 }}>{searchResults.length} results found</Text>
 
             )}
 
             {state.data !== null && (
-              <ScrollView>
+              <View style={{ alignItems: 'center'}}>
+              <ScrollView contentContainerStyle={{ paddingBottom: 200 }}>
                   {renderMainList()}
               </ScrollView>
+              </View>
             )}
 
         </View>
+        </KeyboardAwareScrollView>
       </View>
       </Modal>
 
-
+      <View style={{ position: 'absolute', width: 44, height: 44, borderRadius: 22, backgroundColor: 'blue', right: 10, top: 10, alignItems: 'center', justifyContent: 'center' }}>
+        <MaterialCommunityIcons color={'white'} name='message-processing-outline' size={20} />
+      </View>
 
     </SafeAreaView>
   );

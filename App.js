@@ -64,7 +64,7 @@ const App = () => {
           if(typeof persistedData !== 'undefined' && persistedData !== null){
             if(__DEV__) console.log('ok so we load data from localstorage')
             if(typeof persistedData === 'string'){
-              let persistedData = JSON.parse(persistedData)
+              persistedData = JSON.parse(persistedData)
             }
             var collapsedFlags = {}
             _.map(persistedData, each => {
